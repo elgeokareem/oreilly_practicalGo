@@ -2,23 +2,34 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 )
 
-func fetchRemoteResource(url string) ([]byte, error) {
-	r, err := http.Get(url)
+func index(w http.ResponseWriter, req *http.Request) {
+	method := req.Method
+	fmt.Fprintf(w, "Hola, soy el controlador y me estoy ejecutando con el método %s", method)
+}
 
-	if err != nil {
-		return nil, err
-	}
+func kek(w http.ResponseWriter, req *http.Request) {
+	query := req.URL.Query()
+	fmt.Fprintf(w, "%s", query.Get("name"))
+}
 
-	defer r.Body.Close()
-	return io.ReadAll(r.Body)
+func setupHandlers(mux *http.ServeMux) {
+	mux.HandleFunc("/", index)
+	mux.HandleFunc("/kek", kek)
 }
 
 func main() {
-	lol := os.Args[1:]
-	fmt.Println("kekerinos", lol)
+	listenAddr := os.Getenv("LISTEN_ADDR")
+
+	if len(listenAddr) == 0 {
+		listenAddr = ":8080"
+	}
+
+	mux := http.NewServeMux()
+
+	setupHandlers(mux)
+	http.ListenAndServe(listenAddr, mux)
 }
